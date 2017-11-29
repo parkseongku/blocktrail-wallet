@@ -64,13 +64,28 @@
                         </div>
                     </div>
                 </div>
+
+                <h3 class="group-title"
+                    translate="BUYBTC"></h3>
+
+                <div class="list list-inset">
+                    <div class="item item-button-right" ng-click="buyBTC()">
+                        <span class="sentence-case">Buy with Credit Cards</span>
+                        <button class="button button-clear">
+                            <i class="icon ion-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- REGION NOT OK -->
             <div ng-if="chooseRegion.code && !chooseRegion.regionOk">
                 <div class="item item-text-wrap">
-                    <h2 class="text-neutral">{{ 'BUYBTC_REGION_NOTOK_TITLE' | translate }}: <span class="">{{ chooseRegion.name | translate }}</span></h2>
-                    <p class="padding-t sentence-case" ng-bind-html="'BUYBTC_REGION_NOTOK_BODY' | translate | nl2br"></p>
+                    <h2 class="text-neutral">{{ 'BUYBTC_CHOOSE_TITLE' | translate }}</h2>
+                    <p translate="BUYBTC_CHOOSE_SUBTITLE"
+                       translate-compile
+                       translate-value-region="{{ chooseRegion.name | translate }}"
+                       translate-value-href="href ng-click='selectRegion(null, null)'"></p>
                 </div>
 
                 <div class="padding-t card">

@@ -10,5 +10,9 @@
         $scope.selectUS = function() {
             $scope.usSelected = true;
         };
+
+        $scope.buyBTC = function () {
+            window.open('https://buy.btc.com/', '_system');
+        };
     }
 })();
