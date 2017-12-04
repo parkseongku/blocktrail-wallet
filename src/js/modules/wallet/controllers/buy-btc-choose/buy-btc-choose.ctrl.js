@@ -72,7 +72,7 @@
         };
 
         $scope.goBuyBTCState = function (broker) {
-            $state.go('app.wallet.buybtc.buy', {broker: broker});
+            $state.go('app.wallet.buybtc.buy', { broker: broker });
         };
 
         $scope.goGlideraBrowser = function() {

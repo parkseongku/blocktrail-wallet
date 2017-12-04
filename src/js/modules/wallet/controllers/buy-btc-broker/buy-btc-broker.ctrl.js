@@ -4,8 +4,8 @@
     angular.module("blocktrail.wallet")
         .controller("BuyBTCBrokerCtrl", BuyBTCBrokerCtrl);
 
-    function BuyBTCBrokerCtrl($scope, $state, $ionicLoading, $cordovaDialogs, glideraService,
-                              $stateParams, $timeout, $interval, $translate, $filter,
+    function BuyBTCBrokerCtrl($scope, $state, $ionicLoading, $cordovaDialogs, glideraService, simplexService,
+                              $stateParams, $timeout, $interval, $translate, $filter, $log,
                               CONFIG, trackingService, $q) {
         trackingService.trackEvent(trackingService.EVENTS.BUYBTC.GLIDERA_OPEN);
         $scope.broker = $stateParams.broker;
@@ -28,7 +28,11 @@
 
             recipient: null,        //contact object when sending to contact
             recipientDisplay: null,  //recipient as displayed on screen
-            recipientSource: null
+            recipientSource: null,
+
+            // Simplex specific
+            last_quote_id: null,
+            last_simplex_data: null
         };
 
         var doneTypingInterval = 500;
@@ -44,6 +48,12 @@
                     $scope.buyInput.fiatCurrency = 'USD';
                     return glideraService;
                     break;
+                case 'simplex':
+                    trackingService.trackEvent(trackingService.EVENTS.BUYBTC.SIMPLEX_OPEN);
+                    $scope.buyInput.currencyType = 'USD';
+                    $scope.buyInput.fiatCurrency = 'USD';
+                    return simplexService;
+                    break;
                 default:
                     return null;
                     break;
@@ -56,6 +66,13 @@
                     $scope.currencies = [{code: 'USD', symbol: 'USD'}];
                     return true;
                     break;
+                case 'simplex':
+                    $scope.currencies = [
+                        {code: 'EUR', symbol: 'EUR'},
+                        {code: 'USD', symbol: 'USD'},
+                    ];
+                    return true;
+                    break;
                 default:
                     return false;
                     break;
@@ -64,6 +81,8 @@
 
         $scope.swapInputs = function() {
             if (!$scope.fiatFirst && $scope.settings.localCurrency !== $scope.buyInput.currencyType) {
+
+                // TODO: This can only happen on glidera
                 return $cordovaDialogs.confirm(
                     $translate.instant('MSG_BUYBTC_FIAT_USD_ONLY', {
                         currency: $scope.currencies[0].code,
@@ -157,6 +176,11 @@
                             amount: $scope.buyInput.fiatValue
                         };
 
+                        if ($scope.broker === 'simplex') {
+                            $scope.last_simplex_data = result;
+                            $log.log($scope.last_simplex_data);
+                        }
+
                         $scope.fetchingInputPrice = false;
                     });
                 } else {
@@ -192,6 +216,11 @@
                             code: 'BTC',
                             amount: $scope.buyInput.btcValue
                         };
+
+                        if ($scope.broker === 'simplex') {
+                            $scope.last_simplex_data = result;
+                            $log.log($scope.last_simplex_data);
+                        }
 
                         $scope.fetchingInputPrice = false;
                     });
@@ -314,6 +343,15 @@
                                 // TODO: Alert on mobile?
                             }
                         });
+                    break;
+                case 'simplex':
+
+                    if ($scope.last_simplex_data) {
+                        simplexService.issuePaymentRequest($scope.last_simplex_data).then(function (result) {
+                            console.log(result);
+                        });
+                    }
+
                     break;
             }
         };
