@@ -171,8 +171,14 @@
         blocktrailSDK.prototype.simplexPaymentRequest = function (data) {
             var self = this;
 
-            return self.client.post("/mywallet/simplex/payment/request", data);
+            return self.client.post("/mywallet/simplex/payment/request", null, data);
         };
+
+        blocktrailSDK.prototype.simplexRedirect = function (data) {
+            var self = this;
+
+            return self.client.get("/mywallet/simplex/payment/forward", data);
+        }
 
         blocktrailSDK.prototype.redeemPromoCode = function (data) {
             var self = this;

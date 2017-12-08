@@ -345,13 +345,23 @@
                         });
                     break;
                 case 'simplex':
-
                     if ($scope.last_simplex_data) {
-                        simplexService.issuePaymentRequest($scope.last_simplex_data).then(function (result) {
-                            console.log(result);
+                        return simplexService.issuePaymentRequest($scope.last_simplex_data).then(function () {
+                            return simplexService.initRedirect($scope.last_simplex_data).then(function () {
+                                $ionicLoading.hide();
+                            })
+                        }).catch(function (e) {
+                            $ionicLoading.hide();
+
+                            console.log(e);
+
+                            return $cordovaDialogs.alert(
+                                'Unfortunately, buying Bitcoin is currently unavailable. Please try again later today.',
+                                $translate.instant('ERROR_TITLE_3').sentenceCase(),
+                                $translate.instant('OK')
+                            );
                         });
                     }
-
                     break;
             }
         };
