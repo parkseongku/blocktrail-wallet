@@ -80,6 +80,7 @@ angular.module('blocktrail.wallet')
                             $log.log("bitcoin? " + $rootScope.handleOpenURL.startsWith("bitcoin"));
                             $log.log("bitcoincash? " + ($rootScope.handleOpenURL.startsWith("bitcoincash") || $rootScope.handleOpenURL.startsWith("bitcoin cash")));
                             $log.log("glidera? " + $rootScope.handleOpenURL.startsWith("btccomwallet://glideraCallback"));
+                            $log.log("simplex? " + $rootScope.handleOpenURL.startsWith("btccomwallet://simplexCallback"));
 
                             if ($rootScope.handleOpenURL.startsWith("bitcoin") || $rootScope.handleOpenURL.startsWith("bitcoincash") || $rootScope.handleOpenURL.startsWith("bitcoin cash")) {
                                 $rootScope.bitcoinuri = $rootScope.handleOpenURL;
@@ -91,6 +92,9 @@ angular.module('blocktrail.wallet')
                                 $ionicSideMenuDelegate.toggleLeft(false);
                             } else if ($rootScope.handleOpenURL.startsWith("btccomwallet://glideraCallback/return")) {
                                 nextState = 'app.wallet.buybtc.choose';
+                                $ionicSideMenuDelegate.toggleLeft(false);
+                            } else if ($rootScope.handleOpenURL.startsWith("btccomwallet://simplexCallback")) {
+                                nextState = 'app.wallet.summary';
                                 $ionicSideMenuDelegate.toggleLeft(false);
                             } else {
                                 nextState = 'app.wallet.summary';

@@ -6,7 +6,9 @@
 
     function BuyBTCBrokerCtrl($scope, $state, $ionicLoading, $cordovaDialogs, glideraService, simplexService,
                               $stateParams, $timeout, $interval, $translate, $filter, $log,
-                              CONFIG, trackingService, $q) {
+                              CONFIG, trackingService, $q, activeWallet) {
+        var walletData = activeWallet.getReadOnlyWalletData();
+
         trackingService.trackEvent(trackingService.EVENTS.BUYBTC.GLIDERA_OPEN);
         $scope.broker = $stateParams.broker;
 
@@ -345,23 +347,27 @@
                         });
                     break;
                 case 'simplex':
-                    if ($scope.last_simplex_data) {
-                        return simplexService.issuePaymentRequest($scope.last_simplex_data).then(function () {
-                            return simplexService.initRedirect($scope.last_simplex_data).then(function () {
-                                $ionicLoading.hide();
+                    $scope.last_simplex_data.payment_id = simplexService.generateUUID();
+                    $scope.last_simplex_data.identifier = walletData.identifier;
+                    return activeWallet.getNewAddress().then(function (address) {
+                        $scope.last_simplex_data.address = address;
+
+                        if ($scope.last_simplex_data) {
+                            return simplexService.issuePaymentRequest($scope.last_simplex_data).then(function (response) {
+                                console.log(response);
+                                return simplexService.initRedirect($scope.last_simplex_data).then(function () {
+                                    $ionicLoading.hide();
+                                })
                             })
-                        }).catch(function (e) {
-                            $ionicLoading.hide();
-
-                            console.log(e);
-
-                            return $cordovaDialogs.alert(
-                                'Unfortunately, buying Bitcoin is currently unavailable. Please try again later today.',
-                                $translate.instant('ERROR_TITLE_3').sentenceCase(),
-                                $translate.instant('OK')
-                            );
-                        });
-                    }
+                        }
+                    }).catch(function (e) {
+                        $ionicLoading.hide();
+                        return $cordovaDialogs.alert(
+                            'Unfortunately, buying Bitcoin is currently unavailable. Please try again later today.',
+                            $translate.instant('ERROR_TITLE_3').sentenceCase(),
+                            $translate.instant('OK')
+                        );
+                    });
                     break;
             }
         };

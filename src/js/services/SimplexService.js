@@ -6,6 +6,16 @@ angular.module('blocktrail.wallet').factory(
         var userCanTransact = function() {
         };
 
+        var generateUUID = function() {
+            function s4() {
+                return Math.floor((1 + Math.random()) * 0x10000)
+                    .toString(16)
+                    .substring(1);
+            }
+            return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+                s4() + '-' + s4() + s4() + s4();
+        };
+
         var buyPrices = function(qty, fiat) {
 
             var activeWallet = walletsManagerService.getActiveWallet();
@@ -29,17 +39,14 @@ angular.module('blocktrail.wallet').factory(
             var activeWallet = walletsManagerService.getActiveWallet();
             var sdk = activeWallet.getSdkWallet().sdk;
 
-            console.log(simplexData);
-
             var postData = {
                 qty: simplexData.digital_money.amount,
                 fiat: simplexData.fiat_money.currency,
-                address: "18XQmTws49pjUDjEBYs48kBJ3WHZw3w3AF",
+                address: simplexData.address,
                 quote_id: simplexData.quote_id,
+                payment_id: simplexData.payment_id,
                 platform: 'mobile'
             };
-
-            //TODO save address in settings
 
             return sdk.simplexPaymentRequest(postData)
         };
@@ -51,26 +58,26 @@ angular.module('blocktrail.wallet').factory(
             console.log(simplexData);
 
             return launchService.getAccountInfo().then(function (accountInfo) {
-                return activeWallet.getNewAddress().then(function (address) {
-                    var data = {
-                        address: address,
-                        qty: simplexData.digital_money.amount,
-                        fiat: simplexData.fiat_money.amount,
-                        quote_id: simplexData.quote_id,
-                        platform: 'mobile',
-                        fiat_type: simplexData.fiat_money.currency,
-                        api_key: accountInfo.api_key
-                    };
+                var data = {
+                    address: simplexData.address,
+                    identifier: simplexData.identifier,
+                    qty: simplexData.digital_money.amount,
+                    fiat: simplexData.fiat_money.total_amount,
+                    fiat_type: simplexData.fiat_money.currency,
+                    quote_id: simplexData.quote_id,
+                    payment_id: simplexData.payment_id,
+                    api_key: accountInfo.api_key,
+                    platform: 'mobile'
+                };
 
-                    var queryString = Object.keys(data)
-                        .map(function (k) {
-                            return encodeURIComponent(k) + '=' + encodeURIComponent(data[k])
-                        })
-                        .join('&');
+                var queryString = Object.keys(data)
+                    .map(function (k) {
+                        return encodeURIComponent(k) + '=' + encodeURIComponent(data[k])
+                    })
+                    .join('&');
 
-                    // return sdk.simplexRedirect(data)
-                    window.open('http://' + CONFIG.API_HOST + '/v1/tBTC/mywallet/simplex/payment/forward?' + queryString, '_system')
-                });
+                // TODO: This can be network agnostic, as BUY BTC is only for BTC anyways
+                window.open('http://' + CONFIG.API_HOST + '/v1/BTC/mywallet/simplex/payment/forward?' + queryString, '_system')
             });
         };
 
@@ -88,6 +95,7 @@ angular.module('blocktrail.wallet').factory(
             buyPrices: buyPrices,
             issuePaymentRequest: issuePaymentRequest,
             initRedirect: initRedirect,
+            generateUUID: generateUUID,
             userCanTransact: userCanTransact,
         };
     }
