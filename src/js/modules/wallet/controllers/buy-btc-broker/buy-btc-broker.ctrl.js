@@ -33,9 +33,10 @@
             recipientSource: null,
 
             // Simplex specific
-            last_quote_id: null,
-            last_simplex_data: null
+            last_quote_id: null
         };
+
+        $scope.last_simplex_data = null;
 
         var doneTypingInterval = 500;
         var typingTimer = null;
@@ -71,7 +72,7 @@
                 case 'simplex':
                     $scope.currencies = [
                         {code: 'EUR', symbol: 'EUR'},
-                        {code: 'USD', symbol: 'USD'},
+                        {code: 'USD', symbol: 'USD'}
                     ];
                     return true;
                     break;
@@ -180,7 +181,6 @@
 
                         if ($scope.broker === 'simplex') {
                             $scope.last_simplex_data = result;
-                            $log.log($scope.last_simplex_data);
                         }
 
                         $scope.fetchingInputPrice = false;
@@ -221,7 +221,6 @@
 
                         if ($scope.broker === 'simplex') {
                             $scope.last_simplex_data = result;
-                            $log.log($scope.last_simplex_data);
                         }
 
                         $scope.fetchingInputPrice = false;
