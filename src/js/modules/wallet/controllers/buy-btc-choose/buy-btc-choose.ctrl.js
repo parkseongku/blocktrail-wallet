@@ -4,72 +4,9 @@
     angular.module("blocktrail.wallet")
         .controller("BuyBTCChooseCtrl", BuyBTCChooseCtrl);
 
-    function BuyBTCChooseCtrl($q, $scope, $state, $cordovaDialogs, settingsService, $ionicLoading,
-                      $translate, $timeout, $ionicScrollDelegate, glideraService, buyBTCService, trackingService, $log) {
+    function BuyBTCChooseCtrl($scope, $state, $cordovaDialogs, settingsService, $ionicLoading,
+                      $translate, glideraService, trackingService) {
         $scope.brokers = [];
-
-        // load chooseRegion from settingsService
-        //  show loading spinner while we wait (should be microseconds)
-        $scope.chooseRegion = null;
-        $scope.chooseState = {
-            gettingStarted: true
-        };
-        $ionicLoading.show({
-            template: "<div>{{ 'WORKING' | translate }}...</div><ion-spinner></ion-spinner>",
-            hideOnStateChange: true
-        });
-
-        settingsService.$isLoaded().then(function() {
-            $q.all([
-                buyBTCService.regions().then(function(regions) {
-                    $scope.regions = regions;
-                }),
-                buyBTCService.usStates().then(function(usStates) {
-                    $scope.usStates = usStates;
-                })
-            ]).then(function() {
-                $scope.chooseRegion = _.defaults({}, settingsService.buyBTCRegion, {
-                    code: null,
-                    name: null
-                });
-                $scope.chooseState.gettingStarted = !$scope.chooseRegion.code;
-
-                return buyBTCService.regionBrokers($scope.chooseRegion.code).then(function(brokers) {
-                    $scope.brokers = brokers;
-                    $scope.chooseRegion.regionOk = $scope.brokers.length;
-
-                    $timeout(function() {
-                        $ionicLoading.hide();
-                    });
-                });
-            });
-        });
-
-        $scope.selectRegion = function(region, name) {
-            $log.debug('selectRegion: ' + region + ' (' + name + ')');
-            $scope.chooseRegion.code = region;
-            $scope.chooseRegion.name = name;
-
-            buyBTCService.regionBrokers($scope.chooseRegion.code).then(function(brokers) {
-                $scope.brokers = brokers;
-                $scope.chooseRegion.regionOk = $scope.brokers.length;
-
-                if ($scope.chooseRegion.regionOk) {
-                    trackingService.trackEvent(trackingService.EVENTS.BUYBTC.REGION_OK);
-                } else {
-                    trackingService.trackEvent(trackingService.EVENTS.BUYBTC.REGION_NOTOK);
-                }
-
-                $ionicScrollDelegate.scrollTop();
-
-                settingsService.$isLoaded().then(function() {
-                    settingsService.buyBTCRegion = _.defaults({}, $scope.chooseRegion);
-                    return settingsService.$store().then(function() {
-                        return settingsService.$syncSettingsUp();
-                    });
-                })
-            });
-        };
 
         $scope.goBuyBTCState = function (broker) {
             $state.go('app.wallet.buybtc.buy', { broker: broker });
