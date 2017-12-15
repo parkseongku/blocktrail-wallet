@@ -24,18 +24,18 @@
             s4() + '-' + s4() + s4() + s4();
     };
 
-    SimplexService.prototype.buyPrices = function(qty, fiat) {
+    SimplexService.prototype.buyPrices = function(qty, fiat, fiatType, fiatFirst) {
         var self = this;
 
         var activeWallet = self._walletsManagerService.getActiveWallet();
         var sdk = activeWallet.getSdkWallet().sdk;
 
-        // TODO: handle this better - in settings after refactor
-        if (!fiat) {
-            fiat = 'USD'
+        // Default to USD
+        if (!fiatType) {
+            fiatType = 'USD'
         }
 
-        return sdk.simplexBuyPrices(qty, fiat)
+        return sdk.simplexBuyPrices(qty, fiat, fiatType, fiatFirst)
             .then(function(response) {
                 response.qty = response.digital_money.amount;
                 response.total = response.fiat_money.total_amount;
@@ -53,7 +53,7 @@
 
         var postData = {
             qty: simplexData.digital_money.amount,
-            fiat: simplexData.fiat_money.currency,
+            fiatType: simplexData.fiat_money.currency,
             address: simplexData.address,
             quote_id: simplexData.quote_id,
             payment_id: simplexData.payment_id,

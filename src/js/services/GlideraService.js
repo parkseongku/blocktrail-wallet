@@ -7,6 +7,11 @@ angular.module('blocktrail.wallet').factory(
         var GLIDERA_URL = CONFIG.GLIDERA_URL;
         var GLIDERA_HOST = GLIDERA_URL.replace(/https?:\/\//, '');
 
+        launchService.getWalletConfig()
+            .then(function(result) {
+                setClientId(result.glidera_client_id);
+            });
+
         var GLIDERA_ERRORS = {
             INVALID_ACCESS_TOKEN: 2001,
             ACCESS_TOKEN_REVOKED: 2002
@@ -376,7 +381,7 @@ angular.module('blocktrail.wallet').factory(
             return accessTokenPromise;
         };
 
-        var buyPrices = function(qty, fiat) {
+        var buyPrices = function(qty, fiat, nullArg1 , nullArg2 /* null arguments needed in SimplexService */) {
             var activeWallet = walletsManagerService.getActiveWallet();
             var sdk = activeWallet.getSdkWallet().sdk;
 
