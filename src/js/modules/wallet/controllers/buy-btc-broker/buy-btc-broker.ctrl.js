@@ -9,7 +9,6 @@
                               CONFIG, trackingService, $q, activeWallet) {
         var walletData = activeWallet.getReadOnlyWalletData();
 
-        trackingService.trackEvent(trackingService.EVENTS.BUYBTC.GLIDERA_OPEN);
         $scope.broker = $stateParams.broker;
 
         $scope.priceBTCCurrency = 'USD';
@@ -30,10 +29,7 @@
 
             recipient: null,        //contact object when sending to contact
             recipientDisplay: null,  //recipient as displayed on screen
-            recipientSource: null,
-
-            // Simplex specific
-            last_quote_id: null
+            recipientSource: null
         };
 
         $scope.last_simplex_data = null;
@@ -53,8 +49,6 @@
                     break;
                 case 'simplex':
                     trackingService.trackEvent(trackingService.EVENTS.BUYBTC.SIMPLEX_OPEN);
-                    $scope.buyInput.currencyType = 'USD';
-                    $scope.buyInput.fiatCurrency = 'USD';
                     return simplexService;
                     break;
                 default:
@@ -71,8 +65,8 @@
                     break;
                 case 'simplex':
                     $scope.currencies = [
-                        {code: 'EUR', symbol: 'EUR'},
-                        {code: 'USD', symbol: 'USD'}
+                        {code: 'USD', symbol: 'USD'},
+                        {code: 'EUR', symbol: 'EUR'}
                     ];
                     return true;
                     break;
@@ -84,27 +78,26 @@
 
         $scope.swapInputs = function() {
             if (!$scope.fiatFirst && $scope.settings.localCurrency !== $scope.buyInput.currencyType) {
-
-                // TODO: This can only happen on glidera
-                return $cordovaDialogs.confirm(
-                    $translate.instant('MSG_BUYBTC_FIAT_USD_ONLY', {
-                        currency: $scope.currencies[0].code,
-                        yourCurrency: $scope.settings.localCurrency
-                    }).sentenceCase(),
-                    $translate.instant('MSG_BUYBTC_FIAT_USD_ONLY_TITLE').sentenceCase(),
-                    [$translate.instant('OK'), $translate.instant('CANCEL').sentenceCase()]
-                )
-                    .then(function(dialogResult) {
-                        if (dialogResult === 2) {
-                            return;
-                        }
-
-                        $scope.fiatFirst = !$scope.fiatFirst;
-                    })
-                    ;
-            } else {
-                $scope.fiatFirst = !$scope.fiatFirst;
+                // Glidera special case
+                if ($scope.broker == 'glidera'){
+                    return $cordovaDialogs.confirm(
+                        $translate.instant('MSG_BUYBTC_FIAT_USD_ONLY', {
+                            currency: $scope.currencies[0].code,
+                            yourCurrency: $scope.settings.localCurrency
+                        }).sentenceCase(),
+                        $translate.instant('MSG_BUYBTC_FIAT_USD_ONLY_TITLE').sentenceCase(),
+                        [$translate.instant('OK'), $translate.instant('CANCEL').sentenceCase()]
+                    )
+                        .then(function(dialogResult) {
+                            if (dialogResult === 2) {
+                                return;
+                            }
+                        })
+                        ;
+                }
             }
+
+            $scope.fiatFirst = !$scope.fiatFirst;
         };
 
         $scope.triggerUpdate = function () {
@@ -134,7 +127,7 @@
                 return null;
             }
 
-            return fetchBrokerService().buyPrices(1, null).then(function (result) {
+            return fetchBrokerService().buyPrices(1, null, $scope.buyInput.fiatCurrency, false).then(function (result) {
                 $scope.priceBTC = result.total;
                 $scope.fetchingMainPrice = false;
             });
@@ -163,27 +156,28 @@
                         return false;
                     }
 
-                    return fetchBrokerService().buyPrices($scope.buyInput.btcValue, null).then(function (result) {
-                        lastPriceResponse = result;
+                    return fetchBrokerService().buyPrices($scope.buyInput.btcValue, null, $scope.buyInput.fiatCurrency, false)
+                        .then(function (result) {
+                            lastPriceResponse = result;
 
-                        if (lastPriceResponse.error) {
-                            throw new Error(lastPriceResponse.error);
-                        }
+                            if (lastPriceResponse.error) {
+                                throw new Error(lastPriceResponse.error);
+                            }
 
-                        $scope.buyInput.fiatValue = parseFloat(result.total);
-                        if (result.fees) $scope.buyInput.feeValue = parseFloat(result.fees);
-                        if (result.fees) $scope.buyInput.feePercentage = ($scope.buyInput.feeValue / $scope.buyInput.fiatValue) * 100;
+                            $scope.buyInput.fiatValue = parseFloat(result.total);
+                            if (result.fees) $scope.buyInput.feeValue = parseFloat(result.fees);
+                            if (result.fees) $scope.buyInput.feePercentage = ($scope.buyInput.feeValue / $scope.buyInput.fiatValue) * 100;
 
-                        $scope.altCurrency = {
-                            code: $scope.buyInput.fiatCurrency,
-                            amount: $scope.buyInput.fiatValue
-                        };
+                            $scope.altCurrency = {
+                                code: $scope.buyInput.fiatCurrency,
+                                amount: $scope.buyInput.fiatValue
+                            };
 
-                        if ($scope.broker === 'simplex') {
-                            $scope.last_simplex_data = result;
-                        }
+                            if ($scope.broker === 'simplex') {
+                                $scope.last_simplex_data = result;
+                            }
 
-                        $scope.fetchingInputPrice = false;
+                            $scope.fetchingInputPrice = false;
                     });
                 } else {
                     $scope.buyInput.btcValue = null;
@@ -203,28 +197,29 @@
                         return false;
                     }
 
-                    return fetchBrokerService().buyPrices(null, $scope.buyInput.fiatValue).then(function (result) {
-                        lastPriceResponse = result;
+                    return fetchBrokerService().buyPrices(null, $scope.buyInput.fiatValue, $scope.buyInput.fiatCurrency, $scope.fiatFirst)
+                        .then(function (result) {
+                            lastPriceResponse = result;
 
-                        if (lastPriceResponse.error) {
-                            throw new Error(lastPriceResponse.error);
-                        }
+                            if (lastPriceResponse.error) {
+                                throw new Error(lastPriceResponse.error);
+                            }
 
-                        $scope.buyInput.btcValue = parseFloat(result.qty);
-                        if (result.fees) $scope.buyInput.feeValue = parseFloat(result.fees);
-                        if (result.fees) $scope.buyInput.feePercentage = ($scope.buyInput.feeValue / $scope.buyInput.fiatValue) * 100;
+                            $scope.buyInput.btcValue = parseFloat(result.qty);
+                            if (result.fees) $scope.buyInput.feeValue = parseFloat(result.fees);
+                            if (result.fees) $scope.buyInput.feePercentage = ($scope.buyInput.feeValue / $scope.buyInput.fiatValue) * 100;
 
-                        $scope.altCurrency = {
-                            code: 'BTC',
-                            amount: $scope.buyInput.btcValue
-                        };
+                            $scope.altCurrency = {
+                                code: 'BTC',
+                                amount: $scope.buyInput.btcValue
+                            };
 
-                        if ($scope.broker === 'simplex') {
-                            $scope.last_simplex_data = result;
-                        }
+                            if ($scope.broker === 'simplex') {
+                                $scope.last_simplex_data = result;
+                            }
 
-                        $scope.fetchingInputPrice = false;
-                    });
+                            $scope.fetchingInputPrice = false;
+                        });
                 }
             });
         };
@@ -238,6 +233,11 @@
 
             $scope.buyInput.currencyType = currencyType;
             $scope.updateInputPrice();
+
+            // Update simplex price after currency change
+            if($scope.broker == 'simplex' && currencyType !== $scope.buyInput.fiatCurrency) {
+                updateMainPrice();
+            }
         };
 
         // set default BTC
