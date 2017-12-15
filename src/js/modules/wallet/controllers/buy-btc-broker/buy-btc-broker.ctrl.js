@@ -226,7 +226,11 @@
 
         $scope.updateCurrentType = function(currencyType) {
             updateBrokerCurrencies();
-            $scope.currencies.unshift({code: 'BTC', 'symbol': 'BTC'});
+            try {
+                $scope.currencies.unshift({code: 'BTC', 'symbol': 'BTC'});
+            } catch(e) {
+                console.log(e);
+            }
             $scope.currencies = $scope.currencies.filter(function(currency) {
                 return currency.code != currencyType;
             });
@@ -353,10 +357,21 @@
 
                         if ($scope.last_simplex_data) {
                             return simplexService.issuePaymentRequest($scope.last_simplex_data).then(function (response) {
-                                console.log(response);
-                                return simplexService.initRedirect($scope.last_simplex_data).then(function () {
-                                    $ionicLoading.hide();
-                                })
+                                return $cordovaDialogs.confirm(
+                                    $translate.instant('MSG_SIMPLEX_REDIRECT').sentenceCase(),
+                                    $translate.instant('MSG_BUYBTC_CONFIRM_TITLE').sentenceCase(),
+                                    [$translate.instant('OK'), $translate.instant('CANCEL').sentenceCase()]
+                                )
+                                    .then(function (dialogResult) {
+                                        if (dialogResult === 2) {
+                                            $ionicLoading.hide();
+                                            return;
+                                        }
+
+                                        return simplexService.initRedirect($scope.last_simplex_data).then(function () {
+                                            $ionicLoading.hide();
+                                        })
+                                    });
                             })
                         }
                     }).catch(function (e) {
